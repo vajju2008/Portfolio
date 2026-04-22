@@ -84,10 +84,16 @@ a:hover {
     position: fixed;
     top: 0;
     width: 100%;
+    background-color: transparent;
+    transition: background-color 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease;
+    z-index: 100;
+    border-bottom: 1px solid transparent;
+}
+
+.navbar.scrolled {
     background-color: rgba(15, 23, 42, 0.85);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    z-index: 100;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -640,4 +646,10 @@ footer {
     background-color: var(--accent-color);
     margin-left: 2px;
     vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    from, to { opacity: 1; }
+    50% { opacity: 0; }
 }

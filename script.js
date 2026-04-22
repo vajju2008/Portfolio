@@ -1,23 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Mobile Menu Toggle
+    // 1. Mobile Menu Toggle
     const mobileMenu = document.getElementById('mobile-menu');
     const navMenu = document.getElementById('nav-menu');
-    const navLinksList = document.querySelectorAll('.nav-links a');
-
+    
     if (mobileMenu && navMenu) {
         mobileMenu.addEventListener('click', () => {
             navMenu.classList.toggle('nav-active');
         });
     }
 
-    // Smooth scrolling & closing mobile menu
-    const navLinks = document.querySelectorAll('.nav-links a, .hero-buttons a');
+    // 2. Smooth scrolling & closing mobile menu
+    const navLinks = document.querySelectorAll('.nav-links a, .hero-buttons a[href^="#"]');
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             const targetId = this.getAttribute('href');
             
-            if (targetId.startsWith('#')) {
+            if (targetId && targetId.startsWith('#')) {
                 e.preventDefault();
                 
                 // Close mobile menu
@@ -26,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const targetSection = document.querySelector(targetId);
-                
                 if (targetSection) {
                     const headerOffset = 70;
                     const elementPosition = targetSection.getBoundingClientRect().top;
@@ -41,55 +39,143 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Scroll Spy (Active nav links) & Scroll Reveal
+    // 3. Dynamic Navbar Background
+    const navbar = document.querySelector('.navbar');
+    const handleScroll = () => {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Init on load
+
+    // 4. Scroll Spy with IntersectionObserver
     const sections = document.querySelectorAll('.section');
-    const revealElements = document.querySelectorAll('.reveal');
+    const navLinksList = document.querySelectorAll('.nav-links a');
 
-    const onScroll = () => {
-        const scrollPos = window.scrollY + 80; // offset for navbar
-        const windowHeight = window.innerHeight;
-        const revealPoint = 100;
+    const spyOptions = {
+        root: null,
+        rootMargin: '-50% 0px -50% 0px', // Trigger when section is in the middle of viewport
+        threshold: 0
+    };
 
-        // Scroll Spy
-        sections.forEach(section => {
-            if (section.offsetTop <= scrollPos && (section.offsetTop + section.offsetHeight) > scrollPos) {
+    const spyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
                 navLinksList.forEach(link => {
                     link.classList.remove('active-link');
-                    if (link.getAttribute('href') === '#' + section.id) {
+                    if (link.getAttribute('href') === `#${id}`) {
                         link.classList.add('active-link');
                     }
                 });
             }
         });
+    }, spyOptions);
 
-        // Reveal Animation
-        revealElements.forEach(element => {
-            const elementTop = element.getBoundingClientRect().top;
-            if (elementTop < windowHeight - revealPoint) {
-                element.classList.add('active');
-            }
-        });
+    sections.forEach(section => spyObserver.observe(section));
+
+    // 5. Reveal Animations with IntersectionObserver
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealOptions = {
+        root: null,
+        rootMargin: '0px 0px -100px 0px',
+        threshold: 0.15
     };
 
-    // Trigger once on load
-    onScroll();
-    window.addEventListener('scroll', onScroll);
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+                observer.unobserve(entry.target); // Only reveal once
+            }
+        });
+    }, revealOptions);
 
-    // Typing Effect
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // 6. Enhanced Typing Effect
     const typeWriterElement = document.getElementById('typewriter');
     if (typeWriterElement) {
-        const textToType = "Student Developer | Problem Solver";
+        const phrases = [
+            "Student Developer",
+            "Problem Solver",
+            "Tech Enthusiast"
+        ];
+        let currentPhraseIndex = 0;
+        let isDeleting = false;
         let charIndex = 0;
         
-        const typeWriter = () => {
-            if (charIndex < textToType.length) {
-                typeWriterElement.textContent += textToType.charAt(charIndex);
+        const typeLoop = () => {
+            const currentPhrase = phrases[currentPhraseIndex];
+            
+            if (isDeleting) {
+                typeWriterElement.textContent = currentPhrase.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typeWriterElement.textContent = currentPhrase.substring(0, charIndex + 1);
                 charIndex++;
-                setTimeout(typeWriter, 100);
             }
+
+            // Adjust typing speed
+            let typeSpeed = isDeleting ? 40 : 100;
+            typeSpeed += Math.random() * 50; // Randomize slightly for a human feel
+
+            // Behavior at end of phrase
+            if (!isDeleting && charIndex === currentPhrase.length) {
+                typeSpeed = 2000; // Pause at end of word before deleting
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                currentPhraseIndex = (currentPhraseIndex + 1) % phrases.length; // Move to next phrase
+                typeSpeed = 500; // Pause before typing next word
+            }
+
+            setTimeout(typeLoop, typeSpeed);
         };
         
-        // Start typing after a short delay
-        setTimeout(typeWriter, 500);
+        setTimeout(typeLoop, 1000); // Initial delay
+    }
+
+    // 7. Dynamic Footer Year
+    const yearSpan = document.getElementById('current-year');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+    }
+
+    // 8. Form Submission Handling
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        const statusMsg = document.getElementById('contact-form-status');
+        const submitBtn = document.getElementById('contact-submit');
+
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Mock a loading state
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            statusMsg.style.display = 'none';
+
+            // Simulate an API call / submission delay
+            setTimeout(() => {
+                submitBtn.textContent = originalBtnText;
+                submitBtn.disabled = false;
+                
+                // Show success state and reset form
+                contactForm.reset();
+                statusMsg.textContent = 'Message sent successfully! I will get back to you soon.';
+                statusMsg.style.color = '#34d399'; // subtle green matching dark theme
+                statusMsg.style.display = 'block';
+
+                // Hide message after a while
+                setTimeout(() => {
+                    statusMsg.style.display = 'none';
+                }, 5000);
+            }, 1500);
+        });
     }
 });
